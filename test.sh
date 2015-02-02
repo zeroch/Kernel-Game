@@ -21,4 +21,4 @@ cat /proc/zero/game
 
 
 rmmod game
-tail /var/log/messages 
+tail /var/log/syslog

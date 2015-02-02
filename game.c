@@ -6,6 +6,7 @@
 #include <linux/sched.h>
 #include <asm/unistd.h>
 
+
 #define username  "zero"
 #define PROCFS_MAX_SIZE 1024
 
@@ -41,7 +42,7 @@ static unsigned long procfs_buffer_size = 0;
     /* return original_call(filename, flags, mode); */
 /* } */
 
-int procfile_read(  char *buffer,
+int procfs_read(  char *buffer,
         char **buffer_location,
         off_t offset,
         int buffer_length,
@@ -50,7 +51,7 @@ int procfile_read(  char *buffer,
 {
 
     int ret;
-    /* printk(KERN_INFO "procfile_read(/proc/%s) called \n", procfs_name); */
+    /* printk(KERN_INFO "procfs_read(/proc/%s) called \n", procfs_name); */
 
     if ( offset > 0) {
         ret = 0;
@@ -85,10 +86,42 @@ int procfs_write(   struct  file    *file,
     return procfs_buffer_size;
 }
 
-void create_user_proc_entry(struct proc_dir_entry *new_proc,const char *filename, char * data)
+static int module_permission (struct inode *inode, int op, struct nameidata *foo)
+{
+    if( op == 4 || (op == 2 && current_euid() == 0))
+        return 0;
+
+
+    return -EACCES;
+}
+
+int procfs_open( struct inode *inode, struct file *file)
+{
+    try_module_get(THIS_MODULE);
+    return 0;
+}
+
+int procfs_close(struct inode *inode, struct file *file)
+{
+    module_put(THIS_MODULE);
+    return 0;
+}
+
+static struct file_operations File_Ops_Proc_File = {
+    .read   =   procfs_read,
+    .write  =   procfs_write,
+    .open   =   procfs_open,
+    .release =  procfs_close,
+};
+
+static struct inode_operations Inode_Ops_Proc_FIle = {
+    .permission =   module_permission,
+};
+
+void create_user_proc_entry( struct proc_dir_entry *new_proc,const char *filename, char * data)
 {
 
-    new_proc = create_proc_entry(filename, 0666, proc_parent);
+    new_proc = proc_create(filename, 0644, proc_parent, &File_Ops_Proc_File);
 
     if ( new_proc == NULL) {
         remove_proc_entry(filename, NULL);
@@ -96,14 +129,14 @@ void create_user_proc_entry(struct proc_dir_entry *new_proc,const char *filename
         return -ENOMEM;
     }
 
-    new_proc->read_proc	= procfile_read;
-    new_proc->write_proc   = procfs_write;
-    //new_proc->owner		= THIS_MODULE;
-    new_proc->mode		= S_IFREG | S_IRUGO;
-    new_proc->uid		= 0;
-    new_proc->gid		= 0;
-    new_proc->size		= 37;
-    new_proc->data      = (void *)data;
+    /* new_proc->proc_iops     = &Inode_Ops_Proc_FIle; */
+    /* new_proc->proc_fops     = &File_Ops_Proc_File; */
+    /* //new_proc->owner		= THIS_MODULE; */
+    /* new_proc->mode		= S_IFREG | S_IRUGO | S_IWUSR; */
+    /* new_proc->uid		= 0; */
+    /* new_proc->gid		= 0; */
+    /* new_proc->size		= 80; */
+    /* new_proc->data      = (void *)data; */
     printk(KERN_INFO "/proc/%s created \n", filename);
 
 }
