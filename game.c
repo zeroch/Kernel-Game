@@ -5,7 +5,7 @@
 #include <linux/syscalls.h>
 #include <linux/sched.h>
 #include <asm/unistd.h>
-
+#include <linux/fs.h>
 
 #define username  "zero"
 #define PROCFS_MAX_SIZE 1024
@@ -39,54 +39,56 @@ static unsigned long procfs_buffer_size = 0;
     /* } */
     /* printk("\n"); */
 
-    /* return original_call(filename, flags, mode); */
+    /*jjjeturn original_call(filename, flags, mode); */
 /* } */
 
-int procfs_read(  char *buffer,
-        char **buffer_location,
-        off_t offset,
-        int buffer_length,
-        int *eof,
-        void *data)
+static ssize_t procfs_read( struct file *filp,
+        char *buffer,
+        size_t length,
+        loff_t * offset)
 {
 
-    int ret;
     /* printk(KERN_INFO "procfs_read(/proc/%s) called \n", procfs_name); */
 
-    if ( offset > 0) {
-        ret = 0;
-    } else {
+    static int finished = 0;
 
-        char *read_data = (char *)data;
-       if (!memcpy(buffer, read_data, procfs_buffer_size))
-       /* if ( copy_to_user(read_data, buffer, procfs_buffer_size) ) */
-            return -EFAULT;
-        ret = procfs_buffer_size;
+    if ( finished ) {
+        printk(KERN_INFO "procfs_read: end \n");
+        finished = 0;
+        return 0;
     }
 
-    return ret;
-}
+    finished = 1 ;
 
-int procfs_write(   struct  file    *file,
-        const char  *buffer,
-        unsigned long count,
-        void    *data)
-{
-    procfs_buffer_size = count;
-    char * write_data = (char *)data;
-    if ( procfs_buffer_size > PROCFS_MAX_SIZE) {
-        procfs_buffer_size = PROCFS_MAX_SIZE;
-    }
-
-    if ( copy_from_user(write_data, buffer, procfs_buffer_size)) {
+    if ( copy_to_user(buffer, procfs_buffer, procfs_buffer_size )) {
         return -EFAULT;
     }
 
-    printk(KERN_ALERT "UID: %d", current_uid());
+    printk( KERN_INFO "PROCFS_READ READ %lu bytes \n", procfs_buffer_size);
+
     return procfs_buffer_size;
 }
 
-static int module_permission (struct inode *inode, int op, struct nameidata *foo)
+static ssize_t procfs_write(   struct  file    *file,
+        const char  *buffer,
+        size_t len,
+        loff_t * off)
+{
+    if ( len > PROCFS_MAX_SIZE) {
+        procfs_buffer_size = PROCFS_MAX_SIZE;
+    }else {
+        procfs_buffer_size = len;
+    }
+
+    if ( copy_from_user(procfs_buffer, buffer, procfs_buffer_size)) {
+        return -EFAULT;
+    }
+
+    printk(KERN_ALERT "UID: %d", current_euid());
+    return procfs_buffer_size;
+}
+
+static int module_permission (struct inode *inode, int op)
 {
     if( op == 4 || (op == 2 && current_euid() == 0))
         return 0;
@@ -118,7 +120,7 @@ static struct inode_operations Inode_Ops_Proc_FIle = {
     .permission =   module_permission,
 };
 
-void create_user_proc_entry( struct proc_dir_entry *new_proc,const char *filename, char * data)
+int create_user_proc_entry( struct proc_dir_entry *new_proc,const char *filename, char * data)
 {
 
     new_proc = proc_create(filename, 0644, proc_parent, &File_Ops_Proc_File);
@@ -129,19 +131,23 @@ void create_user_proc_entry( struct proc_dir_entry *new_proc,const char *filenam
         return -ENOMEM;
     }
 
+    /* new_proc->data = (void *)data; */
+
+    /* if ( new_proc ) { */
     /* new_proc->proc_iops     = &Inode_Ops_Proc_FIle; */
     /* new_proc->proc_fops     = &File_Ops_Proc_File; */
-    /* //new_proc->owner		= THIS_MODULE; */
+    /* new_proc->owner		= THIS_MODULE; */
     /* new_proc->mode		= S_IFREG | S_IRUGO | S_IWUSR; */
     /* new_proc->uid		= 0; */
     /* new_proc->gid		= 0; */
     /* new_proc->size		= 80; */
     /* new_proc->data      = (void *)data; */
+    /* } */
     printk(KERN_INFO "/proc/%s created \n", filename);
-
+    return 0;
 }
 
-void create_new_proc_entry()
+int create_new_proc_entry()
 {
     proc_parent = proc_mkdir(username, NULL);
     if( proc_parent == NULL ){
@@ -152,6 +158,7 @@ void create_new_proc_entry()
 
     create_user_proc_entry( Our_Proc_File, "game", procfs_buffer);
     create_user_proc_entry( proc_opponent, "oppoent", another_buffer);
+    return 0;
 }
 
 int init_module()
