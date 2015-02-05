@@ -10,7 +10,7 @@ char board[9] = {" "};
 int turn =  -1;
 // turn : no game -1
 		  // ninja turn 1
-		  // saber turn 0	
+		  // saber turn 0
 
 
 struct player {
@@ -42,10 +42,10 @@ int process_game(char * move, int turn);
 void resetBoard(void );
 
 
-// I don't figure out the API directly point to the file buffer. 
-// so i have to create four buffers for two user. different write and read functions hard-coded buffer address for them. 
+// I don't figure out the API directly point to the file buffer.
+// so i have to create four buffers for two user. different write and read functions hard-coded buffer address for them.
 
-int read_game_ninja(struct file *filp,char *buf,size_t count,loff_t *offp ) 
+int read_game_ninja(struct file *filp,char *buf,size_t count,loff_t *offp )
 {
 		if(count>temp)
 		{
@@ -55,10 +55,10 @@ int read_game_ninja(struct file *filp,char *buf,size_t count,loff_t *offp )
 		copy_to_user(buf, (*(m_list->ninja)).buffer_game, count);
 		if(count==0)
 			temp=len;
-   
+
 	return count;
 }
-int read_opponent_ninja(struct file *filp,char *buf,size_t count,loff_t *offp ) 
+int read_opponent_ninja(struct file *filp,char *buf,size_t count,loff_t *offp )
 {
 		if(count>temp)
 		{
@@ -68,7 +68,7 @@ int read_opponent_ninja(struct file *filp,char *buf,size_t count,loff_t *offp )
 		copy_to_user(buf, (*(m_list->ninja)).buffer_opponent, count);
 		if(count==0)
 			temp=len;
-   
+
 	return count;
 }
 
@@ -94,7 +94,7 @@ int write_opponent_ninja(struct file *filp,const char *buf,size_t count,loff_t *
 }
 
 
-int read_game_saber(struct file *filp,char *buf,size_t count,loff_t *offp ) 
+int read_game_saber(struct file *filp,char *buf,size_t count,loff_t *offp )
 {
 		if(count>temp)
 		{
@@ -104,10 +104,10 @@ int read_game_saber(struct file *filp,char *buf,size_t count,loff_t *offp )
 		copy_to_user(buf, (*(m_list->saber)).buffer_game, count);
 		if(count==0)
 			temp=len;
-   
+
 	return count;
 }
-int read_opponent_saber(struct file *filp,char *buf,size_t count,loff_t *offp ) 
+int read_opponent_saber(struct file *filp,char *buf,size_t count,loff_t *offp )
 {
 		if(count>temp)
 		{
@@ -117,7 +117,7 @@ int read_opponent_saber(struct file *filp,char *buf,size_t count,loff_t *offp )
 		copy_to_user(buf, (*(m_list->saber)).buffer_opponent, count);
 		if(count==0)
 			temp=len;
-   
+
 	return count;
 }
 
@@ -137,7 +137,7 @@ int write_game_saber(struct file *filp,const char *buf,size_t count,loff_t *offp
 			case -2 :
 				printk(KERN_INFO "This position is taken, try again\n");
 				break;
-			case -1	: 
+			case -1	:
 				printk(KERN_INFO "invalid input check your syntax\n");
 				break;
 			case 0 :
@@ -183,7 +183,7 @@ int write_game_ninja(struct file *filp,const char *buf,size_t count,loff_t *offp
 			case -1 :
 				printk(KERN_INFO "This position is taken, try again\n");
 				break;
-			case -2	: 
+			case -2	:
 				printk(KERN_INFO "invalid input check your syntax\n");
 				break;
 			case 0 :
@@ -210,7 +210,7 @@ int write_game_ninja(struct file *filp,const char *buf,size_t count,loff_t *offp
 		}
 
 	}
-	//memcopy looks like not working. 
+	//memcopy looks like not working.
 	memcpy((*(m_list->saber)).buffer_game, getMove, 10);
 
 	return count;
@@ -252,9 +252,9 @@ struct file_operations opp_fops_saber = {
 	write: write_opponent_saber
 };
 
-// mode means we need to know which ninja or saber you are reginered. 
+// mode means we need to know which ninja or saber you are reginered.
 // 1 = ninja  or 0 = saber
-void registerPlyaer(char* uname, struct player *mm_list, int mode) 
+void registerPlyaer(char* uname, struct player *mm_list, int mode)
 {
 	m_list->numPlyaer++;
 	strcpy(mm_list->name, uname);
@@ -283,7 +283,7 @@ void registerPlyaer(char* uname, struct player *mm_list, int mode)
 
     if ( mode )
 	    m_dir_entry = proc_create("opponent", 0666, m_dir_parent, &opp_fops_ninja);
-    else 
+    else
 	    m_dir_entry = proc_create("opponent", 0666, m_dir_parent, &opp_fops_saber);
 
     if ( m_dir_entry == NULL) {
@@ -301,7 +301,7 @@ void registerPlyaer(char* uname, struct player *mm_list, int mode)
 	// msg=kmalloc(GFP_KERNEL,10*sizeof(char));
 }
 
-void remove_user(struct player *mm_list) 
+void remove_user(struct player *mm_list)
 {
     printk(KERN_ALERT "Register: User %s is removed from List \n", mm_list->name);
 	m_list->numPlyaer--;
@@ -330,7 +330,7 @@ int proc_init (void) {
 }
 
 void proc_cleanup(void) {
-	remove_user(m_list->ninja); 
+	remove_user(m_list->ninja);
 	remove_user(m_list->saber);
 	kfree(m_list);
 
@@ -356,12 +356,12 @@ int process_game(char * move, int turn)
 	if ( board[index] == ' '){
 		board[index] = (turn == 1 ) ? 'x' : 'o' ;
 
-		//  normal check valid to winning rules. 
+		//  normal check valid to winning rules.
 		if( (board[0] != ' ' && ((board[0] == board[1] && board[0] == board[2]) ||
 								 (board[0] == board[3] && board[0] == board[4]) ||
 								 (board[0] == board[4] && board[0] == board[6])
 								)
-			)|| 
+			)||
 
 		   ( board[2] != ' ' && ((board[2] == board[5] && board[2] == board[6]) ||
 								 (board[2] == board[4] && board[2] == board[8])
@@ -370,7 +370,7 @@ int process_game(char * move, int turn)
 		   ( board[3] != ' ' && ((board[3] == board[4] && board[3] == board[5])
 		   						)
 		   )||
-		   
+
 		   ( board[7] != ' ' && ((board[7] == board[6] && board[7] == board[8]) ||
 		   						 (board[7] == board[4] && board[7] == board[1])
 		   						)
@@ -379,7 +379,8 @@ int process_game(char * move, int turn)
 		   ) { return 1; }
 
 			// check tie
-			for (int i = 0; i < 9; ++i)
+		    int i ;
+            for (i = 0; i < 9; ++i)
 			{
 				if (board[i] != ' ')
 					return 0;
@@ -416,7 +417,7 @@ void resetBoard(void )
 	memset(board, ' ', 9);
 }
 
-void showStatus(void ) 
+void showStatus(void )
 {
 	switch (turn ) {
 		case 1:
@@ -457,6 +458,6 @@ void showStatus(void )
 	}
 }
 
-MODULE_LICENSE("GPL"); 
+MODULE_LICENSE("GPL");
 module_init(proc_init);
 module_exit(proc_cleanup);
