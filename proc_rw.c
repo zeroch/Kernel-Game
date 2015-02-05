@@ -42,8 +42,20 @@ int process_game(char * move, int turn);
 void resetBoard(void );
 
 
+//  read and write file function define
 // I don't figure out the API directly point to the file buffer.
 // so i have to create four buffers for two user. different write and read functions hard-coded buffer address for them.
+
+
+int read_game_ninja(struct file *filp,char *buf,size_t count,loff_t *offp );
+int write_game_ninja(struct file *filp,const char *buf,size_t count,loff_t *offp);
+int read_opponent_ninja(struct file *filp,char *buf,size_t count,loff_t *offp );
+int write_opponent_ninja(struct file *filp,const char *buf,size_t count,loff_t *offp);
+int write_game_saber(struct file *filp,const char *buf,size_t count,loff_t *offp);
+int read_game_saber(struct file *filp,char *buf,size_t count,loff_t *offp );
+int read_opponent_saber(struct file *filp,char *buf,size_t count,loff_t *offp );
+int write_opponent_saber(struct file *filp,const char *buf,size_t count,loff_t *offp);
+
 
 int read_game_ninja(struct file *filp,char *buf,size_t count,loff_t *offp )
 {
@@ -82,7 +94,9 @@ int write_opponent_ninja(struct file *filp,const char *buf,size_t count,loff_t *
 		 // memcpy((*(m_list->ninja)).buffer_opponent,getName,count);
 		 len=count;
 		 temp=len;
-		 // copy_from_user(getName,buf,count);
+
+         // below part try to register player in run time
+         // copy_from_user(getName,buf,count);
  		// printk(GFP_KERNEL, "Register: user %s is registing, will remove when game end", getName);
 
 		 // registerPlyaer(getName, m_list->saber, 0);
@@ -311,7 +325,6 @@ void remove_user(struct player *mm_list)
 	remove_proc_entry("opponent", mm_list->root);
 	remove_proc_entry(mm_list->name, NULL);
 	memset(mm_list,0,sizeof(struct player));
-
 }
 
 int proc_init (void) {
