@@ -40,6 +40,7 @@ void showStatus(void );
 int convert_move(char char_move);
 int process_game(char * move, int turn);
 void resetBoard(void );
+char* getUsername(int uID);
 
 
 //  read and write file function define
@@ -469,6 +470,38 @@ void showStatus(void )
 		default:
 			break;
 	}
+}
+
+char* getUsername(int uID)
+{
+   struct file *f;
+    char buf[1000];
+    mm_segment_t fs;
+    int i;
+    // Init the buffer with 0
+    for(i=0;i<1000;i++)
+        buf[i] = 0;
+
+    printk(KERN_INFO "My module is loaded\n");
+
+    f = filp_open("/etc/passwd", O_RDONLY, 0);
+    if(f == NULL)
+        printk(KERN_ALERT "filp_open error!!.\n");
+    else{
+        // Get current segment descriptor
+        fs = get_fs();
+        // Set segment descriptor associated to kernel space
+        set_fs(get_ds());
+        // Read the file
+        f->f_op->read(f, buf,1000, (&f->f_pos));
+        // Restore segment descriptor
+        set_fs(fs);
+        // See what we read from file
+        printk(KERN_INFO "buf:%s\n",buf);
+    }
+    filp_close(f,NULL);
+    return buf;
+
 }
 
 MODULE_LICENSE("GPL");
